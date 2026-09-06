@@ -3,22 +3,33 @@ import { useFinanceStore } from "./useFinanceStore";
 import { currentMonthKey, monthLabel } from "./format";
 import ReceitasTab from "./components/ReceitasTab";
 import DespesasTab from "./components/DespesasTab";
+import PagamentosTab from "./components/PagamentosTab";
 import DashboardTab from "./components/DashboardTab";
 import AssistenteTab from "./components/AssistenteTab";
 import RelatorioModal from "./components/RelatorioModal";
 
-type Tab = "receitas" | "despesas" | "dashboard" | "assistente";
+type Tab = "receitas" | "despesas" | "pagamentos" | "dashboard" | "assistente";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "receitas", label: "Receitas" },
   { id: "despesas", label: "Despesas" },
+  { id: "pagamentos", label: "Pagamentos" },
   { id: "dashboard", label: "Dashboard" },
   { id: "assistente", label: "Assistente" },
 ];
 
 function App() {
-  const { data, addReceita, removeReceita, addDespesa, removeDespesa, removeDespesaGroup } =
-    useFinanceStore();
+  const {
+    data,
+    addReceita,
+    removeReceita,
+    addDespesa,
+    removeDespesa,
+    removeDespesaGroup,
+    addPagamento,
+    removePagamento,
+    removePagamentoGroup,
+  } = useFinanceStore();
   const [tab, setTab] = useState<Tab>("receitas");
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [relatorioAberto, setRelatorioAberto] = useState(false);
@@ -91,6 +102,15 @@ function App() {
               onAdd={addDespesa}
               onRemove={removeDespesa}
               onRemoveGroup={removeDespesaGroup}
+            />
+          )}
+          {tab === "pagamentos" && (
+            <PagamentosTab
+              pagamentos={data.pagamentos}
+              monthKey={monthKey}
+              onAdd={addPagamento}
+              onRemove={removePagamento}
+              onRemoveGroup={removePagamentoGroup}
             />
           )}
           {tab === "dashboard" && (

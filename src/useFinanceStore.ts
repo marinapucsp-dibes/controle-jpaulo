@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Despesa, FinanceData, Receita } from "./types";
+import type { Despesa, FinanceData, Pagamento, Receita } from "./types";
 import { loadData, newId, saveData } from "./storage";
 import { addMonthsISO } from "./format";
 
 export type NovaReceita = Omit<Receita, "id">;
 export type NovaDespesa = Omit<Despesa, "id" | "groupId">;
+export type NovoPagamento = Omit<Pagamento, "id" | "groupId">;
 
 export function useFinanceStore() {
   const [data, setData] = useState<FinanceData>(() => loadData());
@@ -81,6 +82,48 @@ export function useFinanceStore() {
     }));
   }, []);
 
+  const addPagamento = useCallback((input: NovoPagamento) => {
+    const groupId = newId();
+    const entries: Pagamento[] = [];
+
+    if (input.parcelado && input.parcelaTotal) {
+      const total = input.parcelaTotal;
+      const atual = input.parcelaAtual ?? 1;
+      for (let parcela = atual; parcela <= total; parcela++) {
+        const offset = parcela - atual;
+        const isParcelaAtual = parcela === atual;
+        entries.push({
+          ...input,
+          id: newId(),
+          groupId,
+          parcelaAtual: parcela,
+          parcelaTotal: total,
+          dataVencimento: addMonthsISO(input.dataVencimento, offset),
+          dataPagamento: isParcelaAtual ? input.dataPagamento : undefined,
+          valorPago: isParcelaAtual ? input.valorPago : undefined,
+        });
+      }
+    } else {
+      entries.push({ ...input, id: newId(), groupId });
+    }
+
+    setData((prev) => ({ ...prev, pagamentos: [...prev.pagamentos, ...entries] }));
+  }, []);
+
+  const removePagamento = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      pagamentos: prev.pagamentos.filter((p) => p.id !== id),
+    }));
+  }, []);
+
+  const removePagamentoGroup = useCallback((groupId: string) => {
+    setData((prev) => ({
+      ...prev,
+      pagamentos: prev.pagamentos.filter((p) => p.groupId !== groupId),
+    }));
+  }, []);
+
   return {
     data,
     addReceita,
@@ -88,5 +131,8 @@ export function useFinanceStore() {
     addDespesa,
     removeDespesa,
     removeDespesaGroup,
+    addPagamento,
+    removePagamento,
+    removePagamentoGroup,
   };
 }

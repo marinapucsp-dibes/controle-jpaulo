@@ -43,7 +43,21 @@ export interface Despesa {
   dataVencimento?: string; // yyyy-mm-dd
 }
 
+export interface Pagamento {
+  id: string;
+  groupId: string;
+  item: string; // ex.: "Cartão Casas Bahia"
+  valorTotal: number;
+  dataVencimento: string; // yyyy-mm-dd
+  dataPagamento?: string; // yyyy-mm-dd
+  valorPago?: number;
+  parcelado: boolean;
+  parcelaAtual?: number;
+  parcelaTotal?: number;
+}
+
 export interface FinanceData {
   receitas: Receita[];
   despesas: Despesa[];
+  pagamentos: Pagamento[];
 }
