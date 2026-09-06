@@ -35,6 +35,18 @@ export default function CategoriaSelect({
           ))}
         </select>
       </Field>
+      {cat?.subcategoriaLivre && (
+        <Field label="Especifique">
+          <input
+            type="text"
+            className={inputClass}
+            value={subcategoria ?? ""}
+            onChange={(e) => onSubcategoriaChange(e.target.value || undefined)}
+            placeholder="Ex.: Presentes, Assinaturas..."
+            required
+          />
+        </Field>
+      )}
       {cat?.subcategorias && (
         <Field label="Subcategoria">
           <select

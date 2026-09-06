@@ -91,6 +91,17 @@ export default function DashboardTab({
     return groups;
   }, [despesasDoMes]);
 
+  const outrosDetalhado = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const d of despesasDoMes) {
+      if (d.categoria === "outros") {
+        const chave = d.subcategoria || "Não especificado";
+        map.set(chave, (map.get(chave) ?? 0) + d.valor);
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  }, [despesasDoMes]);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -159,6 +170,24 @@ export default function DashboardTab({
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
+          )}
+          {outrosDetalhado.length > 0 && (
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Detalhamento de "Outros"
+              </p>
+              <ul className="space-y-1">
+                {outrosDetalhado.map(([nome, valor]) => (
+                  <li
+                    key={nome}
+                    className="flex items-center justify-between text-xs text-slate-500"
+                  >
+                    <span>{nome}</span>
+                    <span>{formatBRL(valor)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 

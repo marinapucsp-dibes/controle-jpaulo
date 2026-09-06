@@ -9,6 +9,8 @@ export interface Categoria {
   id: CategoriaId;
   label: string;
   subcategorias?: Subcategoria[];
+  /** Quando true, a subcategoria é um texto livre digitado pelo usuário em vez de uma lista fixa. */
+  subcategoriaLivre?: boolean;
 }
 
 export const CATEGORIAS: Categoria[] = [
@@ -44,6 +46,8 @@ export const CATEGORIAS: Categoria[] = [
   { id: "gerais_moradia", label: "Gerais Moradia" },
   { id: "lazer", label: "Lazer" },
   { id: "doacao", label: "Doação" },
+  { id: "tucpb", label: "TUCPB" },
+  { id: "outros", label: "Outros", subcategoriaLivre: true },
 ];
 
 export function categoriaLabel(id: CategoriaId): string {

@@ -22,7 +22,9 @@ export type CategoriaId =
   | "manutencao_casa"
   | "gerais_moradia"
   | "lazer"
-  | "doacao";
+  | "doacao"
+  | "tucpb"
+  | "outros";
 
 export type Periodicidade = "unica" | "parcelado" | "recorrente";
 
