@@ -154,6 +154,30 @@ export function generateInsights(
   };
 }
 
+export function buildResumoParaIA(insights: Insights, monthKey: string) {
+  return {
+    mes: monthKey,
+    totalReceitas: insights.totalReceitas,
+    totalDespesas: insights.totalDespesas,
+    saldo: insights.saldo,
+    taxaPoupanca: insights.taxaPoupanca,
+    porCategoria: insights.porCategoria.map((c) => ({
+      label: c.label,
+      total: c.total,
+      percentualDespesas: c.percentualDespesas,
+    })),
+    percentualDiscricionario: insights.percentualDiscricionario,
+    variacaoDespesasMesAnterior: insights.variacaoDespesasMesAnterior,
+    comprometimentoParcelasFuturas: insights.comprometimentoParcelasFuturas,
+    comprometimentoRecorrenteFuturo: insights.comprometimentoRecorrenteFuturo,
+    maioresGastos: insights.maioresGastos.map((g) => ({
+      nome: g.nome,
+      valor: g.valor,
+      percentualDespesas: g.percentualDespesas,
+    })),
+  };
+}
+
 interface RecomendacaoInput {
   totalReceitas: number;
   totalDespesas: number;

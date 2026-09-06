@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Despesa, Receita } from "../types";
-import { generateInsights, type StatusGeral } from "../insights";
+import { buildResumoParaIA, generateInsights, type StatusGeral } from "../insights";
 import { metodoLabel } from "../categories";
 import { formatBRL, monthLabel } from "../format";
 
@@ -42,6 +42,36 @@ export default function AssistenteTab({
   );
 
   const statusInfo = STATUS_INFO[insights.status];
+
+  const [iaLoading, setIaLoading] = useState(false);
+  const [iaError, setIaError] = useState<string | null>(null);
+  const [iaAnalise, setIaAnalise] = useState<string | null>(null);
+
+  async function handleAprofundarComIA() {
+    setIaLoading(true);
+    setIaError(null);
+    setIaAnalise(null);
+    try {
+      const resumo = buildResumoParaIA(insights, monthKey);
+      const response = await fetch("/api/assistente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resumo),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setIaError(data.error ?? "Não foi possível gerar a análise agora.");
+        return;
+      }
+      setIaAnalise(data.analysis || "A IA não retornou nenhuma análise.");
+    } catch {
+      setIaError(
+        "Não foi possível conectar ao serviço de IA. Verifique sua conexão e tente novamente."
+      );
+    } finally {
+      setIaLoading(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,6 +119,39 @@ export default function AssistenteTab({
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700">
+              Aprofundar com IA
+            </h3>
+            <p className="text-xs text-slate-400">
+              Envia apenas os totais agregados deste mês (sem lançamentos
+              individuais) para o Claude gerar uma análise mais detalhada.
+            </p>
+          </div>
+          <button
+            onClick={handleAprofundarComIA}
+            disabled={iaLoading || insights.totalReceitas === 0}
+            className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {iaLoading ? "Analisando..." : "Aprofundar com IA"}
+          </button>
+        </div>
+
+        {iaError && (
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {iaError}
+          </p>
+        )}
+
+        {iaAnalise && (
+          <div className="mt-4 whitespace-pre-line rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            {iaAnalise}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
