@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Despesa, FinanceData, Pagamento, Receita } from "./types";
+import type {
+  CartaoTerceiro,
+  Despesa,
+  FinanceData,
+  Pagamento,
+  Receita,
+} from "./types";
 import { loadData, newId, saveData } from "./storage";
 import { addMonthsISO } from "./format";
 
 export type NovaReceita = Omit<Receita, "id">;
 export type NovaDespesa = Omit<Despesa, "id" | "groupId">;
 export type NovoPagamento = Omit<Pagamento, "id" | "groupId">;
+export type NovoCartaoTerceiro = Omit<CartaoTerceiro, "id" | "pago">;
 
 export function useFinanceStore() {
   const [data, setData] = useState<FinanceData>(() => loadData());
@@ -124,6 +131,32 @@ export function useFinanceStore() {
     }));
   }, []);
 
+  const addCartaoTerceiro = useCallback((input: NovoCartaoTerceiro) => {
+    setData((prev) => ({
+      ...prev,
+      cartaoTerceiros: [
+        ...prev.cartaoTerceiros,
+        { ...input, id: newId(), pago: false },
+      ],
+    }));
+  }, []);
+
+  const removeCartaoTerceiro = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      cartaoTerceiros: prev.cartaoTerceiros.filter((c) => c.id !== id),
+    }));
+  }, []);
+
+  const toggleCartaoTerceiroPago = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      cartaoTerceiros: prev.cartaoTerceiros.map((c) =>
+        c.id === id ? { ...c, pago: !c.pago } : c
+      ),
+    }));
+  }, []);
+
   return {
     data,
     addReceita,
@@ -134,5 +167,8 @@ export function useFinanceStore() {
     addPagamento,
     removePagamento,
     removePagamentoGroup,
+    addCartaoTerceiro,
+    removeCartaoTerceiro,
+    toggleCartaoTerceiroPago,
   };
 }

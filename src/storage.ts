@@ -2,18 +2,25 @@ import type { FinanceData } from "./types";
 
 const STORAGE_KEY = "controle-financeiro-jose-paulo:v1";
 
+function emptyData(): FinanceData {
+  return { receitas: [], despesas: [], pagamentos: [], cartaoTerceiros: [] };
+}
+
 export function loadData(): FinanceData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { receitas: [], despesas: [], pagamentos: [] };
+    if (!raw) return emptyData();
     const parsed = JSON.parse(raw);
     return {
       receitas: Array.isArray(parsed.receitas) ? parsed.receitas : [],
       despesas: Array.isArray(parsed.despesas) ? parsed.despesas : [],
       pagamentos: Array.isArray(parsed.pagamentos) ? parsed.pagamentos : [],
+      cartaoTerceiros: Array.isArray(parsed.cartaoTerceiros)
+        ? parsed.cartaoTerceiros
+        : [],
     };
   } catch {
-    return { receitas: [], despesas: [], pagamentos: [] };
+    return emptyData();
   }
 }
 

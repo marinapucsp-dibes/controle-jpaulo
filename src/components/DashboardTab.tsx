@@ -11,13 +11,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { CategoriaId, Despesa, Receita } from "../types";
+import type { CartaoTerceiro, CategoriaId, Despesa, Receita } from "../types";
 import { METODOS, categoriaLabel } from "../categories";
 import { dataReferenciaDespesa, formatBRL, monthOf } from "../format";
 
 interface DashboardTabProps {
   receitas: Receita[];
   despesas: Despesa[];
+  cartaoTerceiros: CartaoTerceiro[];
   monthKey: string;
 }
 
@@ -35,6 +36,7 @@ const PALETTE = [
 export default function DashboardTab({
   receitas,
   despesas,
+  cartaoTerceiros,
   monthKey,
 }: DashboardTabProps) {
   const receitasDoMes = useMemo(
@@ -101,6 +103,21 @@ export default function DashboardTab({
     }
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [despesasDoMes]);
+
+  const cartaoTerceirosDoMes = useMemo(
+    () => cartaoTerceiros.filter((c) => monthOf(c.data) === monthKey),
+    [cartaoTerceiros, monthKey]
+  );
+
+  const cartaoTerceirosPorNome = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const c of cartaoTerceirosDoMes) {
+      map.set(c.nome, (map.get(c.nome) ?? 0) + c.valor);
+    }
+    return Array.from(map.entries())
+      .map(([name, valor]) => ({ name, valor }))
+      .sort((a, b) => b.valor - a.valor);
+  }, [cartaoTerceirosDoMes]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -246,6 +263,53 @@ export default function DashboardTab({
           ))}
         </ul>
       </div>
+
+      {cartaoTerceirosPorNome.length > 0 && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="mb-2 text-sm font-semibold text-slate-700">
+              Cartão Terceiros por pessoa
+            </h3>
+            <ResponsiveContainer width="100%" height={Math.max(200, cartaoTerceirosPorNome.length * 44)}>
+              <BarChart
+                data={cartaoTerceirosPorNome}
+                layout="vertical"
+                margin={{ left: 20 }}
+              >
+                <XAxis type="number" tickFormatter={(v) => formatBRL(v)} />
+                <YAxis type="category" dataKey="name" width={100} />
+                <Tooltip formatter={(v) => formatBRL(Number(v ?? 0))} />
+                <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
+                  {cartaoTerceirosPorNome.map((_, i) => (
+                    <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-4 py-3">
+              <h3 className="text-sm font-semibold text-slate-700">
+                Cartão Terceiros — total por pessoa
+              </h3>
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {cartaoTerceirosPorNome.map(({ name, valor }) => (
+                <li
+                  key={name}
+                  className="flex items-center justify-between px-4 py-3 text-sm"
+                >
+                  <span className="font-medium text-slate-700">{name}</span>
+                  <span className="font-semibold text-slate-800">
+                    {formatBRL(valor)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

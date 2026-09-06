@@ -3,16 +3,24 @@ import { useFinanceStore } from "./useFinanceStore";
 import { currentMonthKey, monthLabel } from "./format";
 import ReceitasTab from "./components/ReceitasTab";
 import DespesasTab from "./components/DespesasTab";
+import CartaoTerceirosTab from "./components/CartaoTerceirosTab";
 import PagamentosTab from "./components/PagamentosTab";
 import DashboardTab from "./components/DashboardTab";
 import AssistenteTab from "./components/AssistenteTab";
 import RelatorioModal from "./components/RelatorioModal";
 
-type Tab = "receitas" | "despesas" | "pagamentos" | "dashboard" | "assistente";
+type Tab =
+  | "receitas"
+  | "despesas"
+  | "cartaoTerceiros"
+  | "pagamentos"
+  | "dashboard"
+  | "assistente";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "receitas", label: "Receitas" },
   { id: "despesas", label: "Despesas" },
+  { id: "cartaoTerceiros", label: "Cartão Terceiros" },
   { id: "pagamentos", label: "Pagamentos" },
   { id: "dashboard", label: "Dashboard" },
   { id: "assistente", label: "Assistente" },
@@ -29,6 +37,9 @@ function App() {
     addPagamento,
     removePagamento,
     removePagamentoGroup,
+    addCartaoTerceiro,
+    removeCartaoTerceiro,
+    toggleCartaoTerceiroPago,
   } = useFinanceStore();
   const [tab, setTab] = useState<Tab>("receitas");
   const [monthKey, setMonthKey] = useState(currentMonthKey());
@@ -104,6 +115,15 @@ function App() {
               onRemoveGroup={removeDespesaGroup}
             />
           )}
+          {tab === "cartaoTerceiros" && (
+            <CartaoTerceirosTab
+              cartaoTerceiros={data.cartaoTerceiros}
+              monthKey={monthKey}
+              onAdd={addCartaoTerceiro}
+              onRemove={removeCartaoTerceiro}
+              onTogglePago={toggleCartaoTerceiroPago}
+            />
+          )}
           {tab === "pagamentos" && (
             <PagamentosTab
               pagamentos={data.pagamentos}
@@ -117,6 +137,7 @@ function App() {
             <DashboardTab
               receitas={data.receitas}
               despesas={data.despesas}
+              cartaoTerceiros={data.cartaoTerceiros}
               monthKey={monthKey}
             />
           )}

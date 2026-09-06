@@ -56,8 +56,21 @@ export interface Pagamento {
   parcelaTotal?: number;
 }
 
+export type CartaoProprio = "cartao_casas_bahia" | "cartao_caixa";
+
+export interface CartaoTerceiro {
+  id: string;
+  nome: string;
+  cartao: CartaoProprio;
+  descricao: string;
+  valor: number;
+  data: string; // yyyy-mm-dd
+  pago: boolean;
+}
+
 export interface FinanceData {
   receitas: Receita[];
   despesas: Despesa[];
   pagamentos: Pagamento[];
+  cartaoTerceiros: CartaoTerceiro[];
 }
