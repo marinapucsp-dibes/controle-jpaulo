@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Despesa, Receita } from "../types";
 import { METODOS, RECEITA_FONTES, categoriaLabel, metodoLabel } from "../categories";
-import { formatBRL, formatDateBR } from "../format";
+import { dataReferenciaDespesa, formatBRL, formatDateBR } from "../format";
 import { inputClass } from "./Field";
 
 interface RelatorioModalProps {
@@ -37,13 +37,17 @@ export default function RelatorioModal({
   const despesasFiltradas = useMemo(() => {
     if (tipo === "receitas") return [];
     return despesas
-      .filter(
-        (d) =>
-          (!dataInicio || d.dataGasto >= dataInicio) &&
-          (!dataFim || d.dataGasto <= dataFim) &&
+      .filter((d) => {
+        const data = dataReferenciaDespesa(d);
+        return (
+          (!dataInicio || data >= dataInicio) &&
+          (!dataFim || data <= dataFim) &&
           (metodoFiltro === "todos" || d.metodo === metodoFiltro)
-      )
-      .sort((a, b) => (a.dataGasto < b.dataGasto ? -1 : 1));
+        );
+      })
+      .sort((a, b) =>
+        dataReferenciaDespesa(a) < dataReferenciaDespesa(b) ? -1 : 1
+      );
   }, [despesas, tipo, dataInicio, dataFim, metodoFiltro]);
 
   const totalReceitas = receitasFiltradas.reduce((s, r) => s + r.valor, 0);
@@ -183,7 +187,9 @@ export default function RelatorioModal({
                     <td className="py-1.5">{metodoLabel(d.metodo)}</td>
                     <td className="py-1.5">{categoriaLabel(d.categoria)}</td>
                     <td className="py-1.5">{d.nome}</td>
-                    <td className="py-1.5">{formatDateBR(d.dataGasto)}</td>
+                    <td className="py-1.5">
+                      {formatDateBR(dataReferenciaDespesa(d))}
+                    </td>
                     <td className="py-1.5 text-right font-medium">
                       {formatBRL(d.valor)}
                     </td>

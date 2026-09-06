@@ -1,6 +1,6 @@
 import type { CategoriaId, Despesa, MetodoPagamento, Receita } from "./types";
 import { categoriaLabel, metodoLabel } from "./categories";
-import { monthOf, addMonthsISO } from "./format";
+import { monthOf, addMonthsISO, dataReferenciaDespesa } from "./format";
 
 const CATEGORIAS_DISCRICIONARIAS: CategoriaId[] = ["lazer", "doacao"];
 
@@ -46,7 +46,9 @@ export function generateInsights(
   monthKey: string
 ): Insights {
   const receitasDoMes = receitas.filter((r) => monthOf(r.data) === monthKey);
-  const despesasDoMes = despesas.filter((d) => monthOf(d.dataGasto) === monthKey);
+  const despesasDoMes = despesas.filter(
+    (d) => monthOf(dataReferenciaDespesa(d)) === monthKey
+  );
 
   const totalReceitas = receitasDoMes.reduce((s, r) => s + r.valor, 0);
   const totalDespesas = despesasDoMes.reduce((s, d) => s + d.valor, 0);
@@ -78,7 +80,9 @@ export function generateInsights(
     totalReceitas > 0 ? (totalDiscricionario / totalReceitas) * 100 : 0;
 
   const mesAnterior = addMonthsISO(`${monthKey}-01`, -1).slice(0, 7);
-  const despesasMesAnterior = despesas.filter((d) => monthOf(d.dataGasto) === mesAnterior);
+  const despesasMesAnterior = despesas.filter(
+    (d) => monthOf(dataReferenciaDespesa(d)) === mesAnterior
+  );
   const totalDespesasMesAnterior =
     despesasMesAnterior.length > 0
       ? despesasMesAnterior.reduce((s, d) => s + d.valor, 0)
@@ -89,11 +93,19 @@ export function generateInsights(
       : null;
 
   const comprometimentoParcelasFuturas = despesas
-    .filter((d) => d.periodicidade === "parcelado" && monthOf(d.dataGasto) > monthKey)
+    .filter(
+      (d) =>
+        d.periodicidade === "parcelado" &&
+        monthOf(dataReferenciaDespesa(d)) > monthKey
+    )
     .reduce((s, d) => s + d.valor, 0);
 
   const comprometimentoRecorrenteFuturo = despesas
-    .filter((d) => d.periodicidade === "recorrente" && monthOf(d.dataGasto) > monthKey)
+    .filter(
+      (d) =>
+        d.periodicidade === "recorrente" &&
+        monthOf(dataReferenciaDespesa(d)) > monthKey
+    )
     .reduce((s, d) => s + d.valor, 0);
 
   const maioresGastos: MaiorGasto[] = [...despesasDoMes]

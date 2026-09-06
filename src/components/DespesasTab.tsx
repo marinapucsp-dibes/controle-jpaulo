@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Despesa, MetodoPagamento } from "../types";
 import { METODOS, categoriaLabel, subcategoriaLabel } from "../categories";
-import { formatBRL, formatDateBR, monthOf } from "../format";
+import { dataReferenciaDespesa, formatBRL, formatDateBR, monthOf } from "../format";
 import DespesaForm, { despesaBadge } from "./DespesaForm";
 import type { NovaDespesa } from "../useFinanceStore";
 
@@ -23,7 +23,7 @@ export default function DespesasTab({
   const [metodo, setMetodo] = useState<MetodoPagamento>("cartao_casas_bahia");
 
   const despesasDoMes = useMemo(
-    () => despesas.filter((d) => monthOf(d.dataGasto) === monthKey),
+    () => despesas.filter((d) => monthOf(dataReferenciaDespesa(d)) === monthKey),
     [despesas, monthKey]
   );
 
@@ -40,7 +40,9 @@ export default function DespesasTab({
     () =>
       despesasDoMes
         .filter((d) => d.metodo === metodo)
-        .sort((a, b) => (a.dataGasto < b.dataGasto ? 1 : -1)),
+        .sort((a, b) =>
+          dataReferenciaDespesa(a) < dataReferenciaDespesa(b) ? 1 : -1
+        ),
     [despesasDoMes, metodo]
   );
 
@@ -121,10 +123,12 @@ export default function DespesasTab({
                       {d.subcategoria &&
                         ` · ${subcategoriaLabel(d.categoria, d.subcategoria)}`}
                       {" · "}
-                      {formatDateBR(d.dataGasto)}
+                      {d.dataVencimento
+                        ? `venc. ${formatDateBR(d.dataVencimento)}`
+                        : formatDateBR(d.dataGasto)}
                       {d.dataVencimento &&
                         d.dataVencimento !== d.dataGasto &&
-                        ` (venc. ${formatDateBR(d.dataVencimento)})`}
+                        ` (gasto em ${formatDateBR(d.dataGasto)})`}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">

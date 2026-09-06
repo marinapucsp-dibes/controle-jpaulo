@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import type { CategoriaId, Despesa, Receita } from "../types";
 import { METODOS, categoriaLabel } from "../categories";
-import { formatBRL, monthOf } from "../format";
+import { dataReferenciaDespesa, formatBRL, monthOf } from "../format";
 
 interface DashboardTabProps {
   receitas: Receita[];
@@ -42,7 +42,7 @@ export default function DashboardTab({
     [receitas, monthKey]
   );
   const despesasDoMes = useMemo(
-    () => despesas.filter((d) => monthOf(d.dataGasto) === monthKey),
+    () => despesas.filter((d) => monthOf(dataReferenciaDespesa(d)) === monthKey),
     [despesas, monthKey]
   );
 

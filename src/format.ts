@@ -35,6 +35,16 @@ export function monthOf(iso: string): string {
   return iso.slice(0, 7); // yyyy-mm
 }
 
+// Data que define em qual mês uma despesa "conta": a data de vencimento
+// quando existir (cartão e boleto — o que decide em qual fatura o gasto cai),
+// ou a data do gasto quando não houver vencimento (débito e dinheiro).
+export function dataReferenciaDespesa(d: {
+  dataGasto: string;
+  dataVencimento?: string;
+}): string {
+  return d.dataVencimento ?? d.dataGasto;
+}
+
 export function addMonthsISO(iso: string, months: number): string {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1 + months, 1);
