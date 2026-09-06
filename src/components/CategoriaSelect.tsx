@@ -24,8 +24,12 @@ export default function CategoriaSelect({
           className={inputClass}
           value={categoria}
           onChange={(e) => {
-            onCategoriaChange(e.target.value as CategoriaId);
-            onSubcategoriaChange(undefined);
+            const novaCategoriaId = e.target.value as CategoriaId;
+            onCategoriaChange(novaCategoriaId);
+            const novaCategoria = CATEGORIAS.find((c) => c.id === novaCategoriaId);
+            // Pré-seleciona a primeira subcategoria para não bloquear o envio
+            // do formulário silenciosamente por validação nativa do navegador.
+            onSubcategoriaChange(novaCategoria?.subcategorias?.[0]?.id);
           }}
         >
           {CATEGORIAS.map((c) => (
@@ -55,9 +59,6 @@ export default function CategoriaSelect({
             onChange={(e) => onSubcategoriaChange(e.target.value || undefined)}
             required
           >
-            <option value="" disabled>
-              Selecione...
-            </option>
             {cat.subcategorias.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
