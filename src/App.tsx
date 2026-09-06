@@ -4,14 +4,16 @@ import { currentMonthKey, monthLabel } from "./format";
 import ReceitasTab from "./components/ReceitasTab";
 import DespesasTab from "./components/DespesasTab";
 import DashboardTab from "./components/DashboardTab";
+import AssistenteTab from "./components/AssistenteTab";
 import RelatorioModal from "./components/RelatorioModal";
 
-type Tab = "receitas" | "despesas" | "dashboard";
+type Tab = "receitas" | "despesas" | "dashboard" | "assistente";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "receitas", label: "Receitas" },
   { id: "despesas", label: "Despesas" },
   { id: "dashboard", label: "Dashboard" },
+  { id: "assistente", label: "Assistente" },
 ];
 
 function App() {
@@ -93,6 +95,13 @@ function App() {
           )}
           {tab === "dashboard" && (
             <DashboardTab
+              receitas={data.receitas}
+              despesas={data.despesas}
+              monthKey={monthKey}
+            />
+          )}
+          {tab === "assistente" && (
+            <AssistenteTab
               receitas={data.receitas}
               despesas={data.despesas}
               monthKey={monthKey}
