@@ -62,6 +62,12 @@ export default function DespesaForm({
   const cartao = isCartao(metodo);
 
   useEffect(() => {
+    setPeriodicidade("unica");
+    setParcelaAtual(1);
+    setParcelaTotal(2);
+  }, [metodo]);
+
+  useEffect(() => {
     if (editingDespesa) {
       setCategoria(editingDespesa.categoria);
       setSubcategoria(editingDespesa.subcategoria);
@@ -112,7 +118,7 @@ export default function DespesaForm({
       subcategoria,
       nome: nome.trim(),
       valor,
-      periodicidade: cartao ? periodicidade : "unica",
+      periodicidade,
       dataGasto: metodo === "boleto" ? dataVencimento : dataGasto,
       dataVencimento:
         metodo === "boleto" || cartao ? dataVencimento : undefined,
@@ -162,15 +168,17 @@ export default function DespesaForm({
         <CurrencyInput value={valor} onChange={setValor} required />
       </Field>
 
-      {!editingDespesa && cartao && (
+      {!editingDespesa && (
         <Field label="Periodicidade">
           <select
             className={inputClass}
             value={periodicidade}
             onChange={(e) => setPeriodicidade(e.target.value as Periodicidade)}
           >
-            <option value="unica">Parcela Única</option>
-            <option value="parcelado">Parcelado</option>
+            <option value="unica">
+              {cartao ? "Parcela Única" : "Gasto Pontual"}
+            </option>
+            {cartao && <option value="parcelado">Parcelado</option>}
             <option value="recorrente">Recorrente (12 meses)</option>
           </select>
         </Field>
@@ -207,7 +215,7 @@ export default function DespesaForm({
         </>
       )}
 
-      {!editingDespesa && cartao && periodicidade === "recorrente" && (
+      {!editingDespesa && periodicidade === "recorrente" && (
         <p className="col-span-full -mt-2 text-xs text-slate-400">
           Este gasto será lançado automaticamente pelos próximos 12 meses.
         </p>
