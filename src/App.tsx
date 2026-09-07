@@ -30,15 +30,20 @@ function App() {
   const {
     data,
     addReceita,
+    updateReceita,
     removeReceita,
     addDespesa,
+    updateDespesa,
     removeDespesa,
     removeDespesaGroup,
     addPagamento,
+    updatePagamento,
     removePagamento,
     removePagamentoGroup,
     addCartaoTerceiro,
+    updateCartaoTerceiro,
     removeCartaoTerceiro,
+    removeCartaoTerceiroGroup,
     toggleCartaoTerceiroPago,
   } = useFinanceStore();
   const [tab, setTab] = useState<Tab>("receitas");
@@ -103,6 +108,7 @@ function App() {
               receitas={data.receitas}
               monthKey={monthKey}
               onAdd={addReceita}
+              onUpdate={updateReceita}
               onRemove={removeReceita}
             />
           )}
@@ -111,6 +117,7 @@ function App() {
               despesas={data.despesas}
               monthKey={monthKey}
               onAdd={addDespesa}
+              onUpdate={updateDespesa}
               onRemove={removeDespesa}
               onRemoveGroup={removeDespesaGroup}
             />
@@ -120,7 +127,9 @@ function App() {
               cartaoTerceiros={data.cartaoTerceiros}
               monthKey={monthKey}
               onAdd={addCartaoTerceiro}
+              onUpdate={updateCartaoTerceiro}
               onRemove={removeCartaoTerceiro}
+              onRemoveGroup={removeCartaoTerceiroGroup}
               onTogglePago={toggleCartaoTerceiroPago}
             />
           )}
@@ -129,6 +138,7 @@ function App() {
               pagamentos={data.pagamentos}
               monthKey={monthKey}
               onAdd={addPagamento}
+              onUpdate={updatePagamento}
               onRemove={removePagamento}
               onRemoveGroup={removePagamentoGroup}
             />
@@ -159,6 +169,8 @@ function App() {
         <RelatorioModal
           receitas={data.receitas}
           despesas={data.despesas}
+          pagamentos={data.pagamentos}
+          cartaoTerceiros={data.cartaoTerceiros}
           onClose={() => setRelatorioAberto(false)}
         />
       )}

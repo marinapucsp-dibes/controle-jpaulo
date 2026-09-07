@@ -9,6 +9,13 @@ interface DespesasTabProps {
   despesas: Despesa[];
   monthKey: string;
   onAdd: (input: NovaDespesa) => void;
+  onUpdate: (
+    id: string,
+    patch: Omit<
+      NovaDespesa,
+      "periodicidade" | "parcelaAtual" | "parcelaTotal"
+    >
+  ) => void;
   onRemove: (id: string) => void;
   onRemoveGroup: (groupId: string) => void;
 }
@@ -17,10 +24,19 @@ export default function DespesasTab({
   despesas,
   monthKey,
   onAdd,
+  onUpdate,
   onRemove,
   onRemoveGroup,
 }: DespesasTabProps) {
-  const [metodo, setMetodo] = useState<MetodoPagamento>("cartao_casas_bahia");
+  const [metodo, setMetodoRaw] = useState<MetodoPagamento>(
+    "cartao_casas_bahia"
+  );
+  const [editingDespesa, setEditingDespesa] = useState<Despesa | null>(null);
+
+  function setMetodo(m: MetodoPagamento) {
+    setEditingDespesa(null);
+    setMetodoRaw(m);
+  }
 
   const despesasDoMes = useMemo(
     () => despesas.filter((d) => monthOf(dataReferenciaDespesa(d)) === monthKey),
@@ -88,7 +104,13 @@ export default function DespesasTab({
         ))}
       </div>
 
-      <DespesaForm metodo={metodo} onAdd={onAdd} />
+      <DespesaForm
+        metodo={metodo}
+        editingDespesa={editingDespesa}
+        onAdd={onAdd}
+        onUpdate={onUpdate}
+        onCancelEdit={() => setEditingDespesa(null)}
+      />
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-4 py-3">
@@ -136,6 +158,12 @@ export default function DespesasTab({
                       {formatBRL(d.valor)}
                     </span>
                     <div className="flex flex-col items-end gap-1 no-print">
+                      <button
+                        onClick={() => setEditingDespesa(d)}
+                        className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                      >
+                        Editar
+                      </button>
                       <button
                         onClick={() => onRemove(d.id)}
                         className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50"

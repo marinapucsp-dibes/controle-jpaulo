@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Despesa, MetodoPagamento, Periodicidade } from "../types";
 import CategoriaSelect from "./CategoriaSelect";
 import Field, { inputClass } from "./Field";
@@ -9,7 +9,16 @@ import type { CategoriaId } from "../types";
 
 interface DespesaFormProps {
   metodo: MetodoPagamento;
+  editingDespesa: Despesa | null;
   onAdd: (input: NovaDespesa) => void;
+  onUpdate: (
+    id: string,
+    patch: Omit<
+      NovaDespesa,
+      "periodicidade" | "parcelaAtual" | "parcelaTotal"
+    >
+  ) => void;
+  onCancelEdit: () => void;
 }
 
 const isCartao = (m: MetodoPagamento) =>
@@ -31,7 +40,13 @@ const dataGastoLabel: Record<MetodoPagamento, string> = {
   dinheiro: "Data do gasto",
 };
 
-export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
+export default function DespesaForm({
+  metodo,
+  editingDespesa,
+  onAdd,
+  onUpdate,
+  onCancelEdit,
+}: DespesaFormProps) {
   const [categoria, setCategoria] = useState<CategoriaId>("transporte");
   const [subcategoria, setSubcategoria] = useState<string | undefined>(
     undefined
@@ -46,6 +61,27 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
 
   const cartao = isCartao(metodo);
 
+  useEffect(() => {
+    if (editingDespesa) {
+      setCategoria(editingDespesa.categoria);
+      setSubcategoria(editingDespesa.subcategoria);
+      setNome(editingDespesa.nome);
+      setValor(editingDespesa.valor);
+      setDataGasto(editingDespesa.dataGasto);
+      setDataVencimento(editingDespesa.dataVencimento ?? todayISO());
+    } else {
+      setCategoria("transporte");
+      setSubcategoria(undefined);
+      setNome("");
+      setValor(0);
+      setPeriodicidade("unica");
+      setParcelaAtual(1);
+      setParcelaTotal(2);
+      setDataGasto(todayISO());
+      setDataVencimento(todayISO());
+    }
+  }, [editingDespesa]);
+
   function resetCommon() {
     setNome("");
     setValor(0);
@@ -54,6 +90,21 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!nome.trim() || valor <= 0) return;
+
+    if (editingDespesa) {
+      onUpdate(editingDespesa.id, {
+        metodo,
+        categoria,
+        subcategoria,
+        nome: nome.trim(),
+        valor,
+        dataGasto: metodo === "boleto" ? dataVencimento : dataGasto,
+        dataVencimento:
+          metodo === "boleto" || cartao ? dataVencimento : undefined,
+      });
+      onCancelEdit();
+      return;
+    }
 
     const base: NovaDespesa = {
       metodo,
@@ -81,6 +132,15 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
       onSubmit={handleSubmit}
       className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3"
     >
+      {editingDespesa && (
+        <p className="col-span-full rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          Editando lançamento
+          {editingDespesa.periodicidade !== "unica" &&
+            " (a periodicidade/parcela não pode ser alterada aqui)"}
+          .
+        </p>
+      )}
+
       <CategoriaSelect
         categoria={categoria}
         subcategoria={subcategoria}
@@ -102,7 +162,7 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
         <CurrencyInput value={valor} onChange={setValor} required />
       </Field>
 
-      {cartao && (
+      {!editingDespesa && cartao && (
         <Field label="Periodicidade">
           <select
             className={inputClass}
@@ -116,7 +176,7 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
         </Field>
       )}
 
-      {cartao && periodicidade === "parcelado" && (
+      {!editingDespesa && cartao && periodicidade === "parcelado" && (
         <>
           <Field label="Parcela atual">
             <input
@@ -147,7 +207,7 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
         </>
       )}
 
-      {cartao && periodicidade === "recorrente" && (
+      {!editingDespesa && cartao && periodicidade === "recorrente" && (
         <p className="col-span-full -mt-2 text-xs text-slate-400">
           Este gasto será lançado automaticamente pelos próximos 12 meses.
         </p>
@@ -177,12 +237,23 @@ export default function DespesaForm({ metodo, onAdd }: DespesaFormProps) {
         </Field>
       )}
 
-      <button
-        type="submit"
-        className="h-fit self-end rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:col-span-1"
-      >
-        Adicionar despesa
-      </button>
+      <div className="flex gap-2 self-end sm:col-span-1">
+        <button
+          type="submit"
+          className="h-fit rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+        >
+          {editingDespesa ? "Salvar alterações" : "Adicionar despesa"}
+        </button>
+        {editingDespesa && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="h-fit rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

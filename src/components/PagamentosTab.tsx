@@ -9,6 +9,10 @@ interface PagamentosTabProps {
   pagamentos: Pagamento[];
   monthKey: string;
   onAdd: (input: NovoPagamento) => void;
+  onUpdate: (
+    id: string,
+    patch: Omit<NovoPagamento, "parcelado" | "parcelaAtual" | "parcelaTotal">
+  ) => void;
   onRemove: (id: string) => void;
   onRemoveGroup: (groupId: string) => void;
 }
@@ -27,9 +31,11 @@ export default function PagamentosTab({
   pagamentos,
   monthKey,
   onAdd,
+  onUpdate,
   onRemove,
   onRemoveGroup,
 }: PagamentosTabProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [item, setItem] = useState("");
   const [valorTotal, setValorTotal] = useState(0);
   const [dataVencimento, setDataVencimento] = useState(todayISO());
@@ -49,8 +55,10 @@ export default function PagamentosTab({
   const totalPendente = totalDoMes - totalPago;
 
   function resetForm() {
+    setEditingId(null);
     setItem("");
     setValorTotal(0);
+    setDataVencimento(todayISO());
     setDataPagamento("");
     setValorPago(0);
     setParcelado(false);
@@ -58,9 +66,30 @@ export default function PagamentosTab({
     setParcelaTotal(2);
   }
 
+  function handleEditar(p: Pagamento) {
+    setEditingId(p.id);
+    setItem(p.item);
+    setValorTotal(p.valorTotal);
+    setDataVencimento(p.dataVencimento);
+    setDataPagamento(p.dataPagamento ?? "");
+    setValorPago(p.valorPago ?? 0);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!item.trim() || valorTotal <= 0 || !dataVencimento) return;
+
+    if (editingId) {
+      onUpdate(editingId, {
+        item: item.trim(),
+        valorTotal,
+        dataVencimento,
+        dataPagamento: dataPagamento || undefined,
+        valorPago: valorPago > 0 ? valorPago : undefined,
+      });
+      resetForm();
+      return;
+    }
 
     onAdd({
       item: item.trim(),
@@ -112,6 +141,11 @@ export default function PagamentosTab({
         onSubmit={handleSubmit}
         className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3"
       >
+        {editingId && (
+          <p className="col-span-full rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            Editando lançamento. O parcelamento não pode ser alterado aqui.
+          </p>
+        )}
         <Field label="Item" className="sm:col-span-2">
           <input
             type="text"
@@ -147,17 +181,20 @@ export default function PagamentosTab({
           <CurrencyInput value={valorPago} onChange={setValorPago} />
         </Field>
 
-        <label className="flex items-center gap-2 text-sm text-slate-600 sm:col-span-3">
-          <input
-            type="checkbox"
-            checked={parcelado}
-            onChange={(e) => setParcelado(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-          />
-          Parcelar valor pendente (lança automaticamente nos meses seguintes)
-        </label>
+        {!editingId && (
+          <label className="flex items-center gap-2 text-sm text-slate-600 sm:col-span-3">
+            <input
+              type="checkbox"
+              checked={parcelado}
+              onChange={(e) => setParcelado(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            Parcelar valor pendente (lança automaticamente nos meses
+            seguintes)
+          </label>
+        )}
 
-        {parcelado && (
+        {!editingId && parcelado && (
           <>
             <Field label="Parcela atual">
               <input
@@ -188,12 +225,23 @@ export default function PagamentosTab({
           </>
         )}
 
-        <button
-          type="submit"
-          className="h-fit self-end rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-        >
-          Adicionar pagamento
-        </button>
+        <div className="flex gap-2 self-end">
+          <button
+            type="submit"
+            className="h-fit rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            {editingId ? "Salvar alterações" : "Adicionar pagamento"}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="h-fit rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -251,6 +299,12 @@ export default function PagamentosTab({
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1 no-print">
+                      <button
+                        onClick={() => handleEditar(p)}
+                        className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                      >
+                        Editar
+                      </button>
                       <button
                         onClick={() => onRemove(p.id)}
                         className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50"

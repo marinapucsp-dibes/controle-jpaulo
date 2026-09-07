@@ -10,6 +10,7 @@ interface ReceitasTabProps {
   receitas: Receita[];
   monthKey: string;
   onAdd: (input: NovaReceita) => void;
+  onUpdate: (id: string, patch: NovaReceita) => void;
   onRemove: (id: string) => void;
 }
 
@@ -17,8 +18,10 @@ export default function ReceitasTab({
   receitas,
   monthKey,
   onAdd,
+  onUpdate,
   onRemove,
 }: ReceitasTabProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [fonte, setFonte] = useState<ReceitaFonte>("aposentadoria");
   const [valor, setValor] = useState(0);
   const [data, setData] = useState(todayISO());
@@ -40,9 +43,28 @@ export default function ReceitasTab({
 
   const totalGeral = totaisPorFonte.aposentadoria + totaisPorFonte.loja + totaisPorFonte.premios;
 
+  function resetForm() {
+    setEditingId(null);
+    setFonte("aposentadoria");
+    setValor(0);
+    setData(todayISO());
+  }
+
+  function handleEditar(r: Receita) {
+    setEditingId(r.id);
+    setFonte(r.fonte);
+    setValor(r.valor);
+    setData(r.data);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (valor <= 0 || !data) return;
+    if (editingId) {
+      onUpdate(editingId, { fonte, valor, data });
+      resetForm();
+      return;
+    }
     onAdd({ fonte, valor, data });
     setValor(0);
   }
@@ -104,12 +126,23 @@ export default function ReceitasTab({
             required
           />
         </Field>
-        <button
-          type="submit"
-          className="h-fit rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-        >
-          Adicionar receita
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="h-fit rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            {editingId ? "Salvar alterações" : "Adicionar receita"}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="h-fit rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -141,6 +174,12 @@ export default function ReceitasTab({
                   <span className="font-semibold text-emerald-700">
                     {formatBRL(r.valor)}
                   </span>
+                  <button
+                    onClick={() => handleEditar(r)}
+                    className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50 no-print"
+                  >
+                    Editar
+                  </button>
                   <button
                     onClick={() => onRemove(r.id)}
                     className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50 no-print"

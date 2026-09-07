@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { CartaoProprio, CartaoTerceiro } from "../types";
+import type { CartaoProprio, CartaoTerceiro, Periodicidade } from "../types";
 import { metodoLabel } from "../categories";
 import { formatBRL, formatDateBR, monthOf, todayISO } from "../format";
 import Field, { inputClass } from "./Field";
@@ -10,24 +10,46 @@ interface CartaoTerceirosTabProps {
   cartaoTerceiros: CartaoTerceiro[];
   monthKey: string;
   onAdd: (input: NovoCartaoTerceiro) => void;
+  onUpdate: (
+    id: string,
+    patch: Omit<
+      NovoCartaoTerceiro,
+      "periodicidade" | "parcelaAtual" | "parcelaTotal"
+    >
+  ) => void;
   onRemove: (id: string) => void;
+  onRemoveGroup: (groupId: string) => void;
   onTogglePago: (id: string) => void;
 }
 
 const CARTOES: CartaoProprio[] = ["cartao_casas_bahia", "cartao_caixa"];
 
+function badgeDe(c: CartaoTerceiro): string | undefined {
+  if (c.periodicidade === "parcelado" && c.parcelaTotal) {
+    return `${c.parcelaAtual}/${c.parcelaTotal}`;
+  }
+  if (c.periodicidade === "recorrente") return "recorrente";
+  return undefined;
+}
+
 export default function CartaoTerceirosTab({
   cartaoTerceiros,
   monthKey,
   onAdd,
+  onUpdate,
   onRemove,
+  onRemoveGroup,
   onTogglePago,
 }: CartaoTerceirosTabProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [nome, setNome] = useState("");
   const [cartao, setCartao] = useState<CartaoProprio>("cartao_casas_bahia");
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState(0);
   const [data, setData] = useState(todayISO());
+  const [periodicidade, setPeriodicidade] = useState<Periodicidade>("unica");
+  const [parcelaAtual, setParcelaAtual] = useState(1);
+  const [parcelaTotal, setParcelaTotal] = useState(2);
 
   const doMes = useMemo(
     () => cartaoTerceiros.filter((c) => monthOf(c.data) === monthKey),
@@ -48,12 +70,54 @@ export default function CartaoTerceirosTab({
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [doMes]);
 
+  function resetForm() {
+    setEditingId(null);
+    setNome("");
+    setCartao("cartao_casas_bahia");
+    setDescricao("");
+    setValor(0);
+    setData(todayISO());
+    setPeriodicidade("unica");
+    setParcelaAtual(1);
+    setParcelaTotal(2);
+  }
+
+  function handleEditar(c: CartaoTerceiro) {
+    setEditingId(c.id);
+    setNome(c.nome);
+    setCartao(c.cartao);
+    setDescricao(c.descricao);
+    setValor(c.valor);
+    setData(c.data);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!nome.trim() || !descricao.trim() || valor <= 0 || !data) return;
-    onAdd({ nome: nome.trim(), cartao, descricao: descricao.trim(), valor, data });
-    setDescricao("");
-    setValor(0);
+
+    if (editingId) {
+      onUpdate(editingId, {
+        nome: nome.trim(),
+        cartao,
+        descricao: descricao.trim(),
+        valor,
+        data,
+      });
+      resetForm();
+      return;
+    }
+
+    onAdd({
+      nome: nome.trim(),
+      cartao,
+      descricao: descricao.trim(),
+      valor,
+      data,
+      periodicidade,
+      parcelaAtual: periodicidade === "parcelado" ? parcelaAtual : undefined,
+      parcelaTotal: periodicidade === "parcelado" ? parcelaTotal : undefined,
+    });
+    resetForm();
   }
 
   const sorted = [...doMes].sort((a, b) => (a.data < b.data ? 1 : -1));
@@ -91,6 +155,11 @@ export default function CartaoTerceirosTab({
         onSubmit={handleSubmit}
         className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3"
       >
+        {editingId && (
+          <p className="col-span-full rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            Editando lançamento. Periodicidade não pode ser alterada aqui.
+          </p>
+        )}
         <Field label="Nome">
           <input
             type="text"
@@ -137,12 +206,75 @@ export default function CartaoTerceirosTab({
           />
         </Field>
 
-        <button
-          type="submit"
-          className="h-fit self-end rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-        >
-          Adicionar
-        </button>
+        {!editingId && (
+          <Field label="Periodicidade">
+            <select
+              className={inputClass}
+              value={periodicidade}
+              onChange={(e) => setPeriodicidade(e.target.value as Periodicidade)}
+            >
+              <option value="unica">Parcela Única</option>
+              <option value="parcelado">Parcelado</option>
+              <option value="recorrente">Recorrente (12 meses)</option>
+            </select>
+          </Field>
+        )}
+
+        {!editingId && periodicidade === "parcelado" && (
+          <>
+            <Field label="Parcela atual">
+              <input
+                type="number"
+                min={1}
+                max={parcelaTotal}
+                className={inputClass}
+                value={parcelaAtual}
+                onChange={(e) => setParcelaAtual(Number(e.target.value))}
+                required
+              />
+            </Field>
+            <Field label="Total de parcelas">
+              <input
+                type="number"
+                min={parcelaAtual}
+                className={inputClass}
+                value={parcelaTotal}
+                onChange={(e) => setParcelaTotal(Number(e.target.value))}
+                required
+              />
+            </Field>
+            <p className="col-span-full -mt-2 text-xs text-slate-400">
+              Ex.: parcela {parcelaAtual}/{parcelaTotal}. Serão lançadas
+              automaticamente as parcelas de {parcelaAtual} até {parcelaTotal}{" "}
+              nos meses seguintes.
+            </p>
+          </>
+        )}
+
+        {!editingId && periodicidade === "recorrente" && (
+          <p className="col-span-full -mt-2 text-xs text-slate-400">
+            Este lançamento será repetido automaticamente pelos próximos 12
+            meses.
+          </p>
+        )}
+
+        <div className="flex gap-2 sm:col-span-1">
+          <button
+            type="submit"
+            className="h-fit self-end rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            {editingId ? "Salvar alterações" : "Adicionar"}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="h-fit self-end rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
 
       {totalPorNome.length > 0 && (
@@ -180,49 +312,75 @@ export default function CartaoTerceirosTab({
           </p>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {sorted.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-              >
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={c.pago}
-                    onChange={() => onTogglePago(c.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <div className="flex flex-col">
+            {sorted.map((c) => {
+              const badge = badgeDe(c);
+              return (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                >
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={c.pago}
+                      onChange={() => onTogglePago(c.id)}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div className="flex flex-col">
+                      <span
+                        className={`font-medium ${
+                          c.pago
+                            ? "text-slate-400 line-through"
+                            : "text-slate-700"
+                        }`}
+                      >
+                        {c.nome} — {c.descricao}
+                        {badge && (
+                          <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                            {badge}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {metodoLabel(c.cartao)} · {formatDateBR(c.data)}
+                        {c.pago && " · Pago"}
+                      </span>
+                    </div>
+                  </label>
+                  <div className="flex items-center gap-3">
                     <span
-                      className={`font-medium ${
-                        c.pago ? "text-slate-400 line-through" : "text-slate-700"
+                      className={`font-semibold ${
+                        c.pago ? "text-slate-400" : "text-rose-700"
                       }`}
                     >
-                      {c.nome} — {c.descricao}
+                      {formatBRL(c.valor)}
                     </span>
-                    <span className="text-xs text-slate-400">
-                      {metodoLabel(c.cartao)} · {formatDateBR(c.data)}
-                      {c.pago && " · Pago"}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 no-print">
+                      <button
+                        onClick={() => handleEditar(c)}
+                        className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => onRemove(c.id)}
+                        className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50"
+                      >
+                        Remover
+                      </button>
+                      {c.periodicidade !== "unica" && (
+                        <button
+                          onClick={() => onRemoveGroup(c.groupId)}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-50"
+                        >
+                          Remover série
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </label>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`font-semibold ${
-                      c.pago ? "text-slate-400" : "text-rose-700"
-                    }`}
-                  >
-                    {formatBRL(c.valor)}
-                  </span>
-                  <button
-                    onClick={() => onRemove(c.id)}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-red-500 transition hover:bg-red-50 no-print"
-                  >
-                    Remover
-                  </button>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

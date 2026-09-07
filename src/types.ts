@@ -60,12 +60,16 @@ export type CartaoProprio = "cartao_casas_bahia" | "cartao_caixa";
 
 export interface CartaoTerceiro {
   id: string;
+  groupId: string;
   nome: string;
   cartao: CartaoProprio;
   descricao: string;
   valor: number;
   data: string; // yyyy-mm-dd
   pago: boolean;
+  periodicidade: Periodicidade;
+  parcelaAtual?: number;
+  parcelaTotal?: number;
 }
 
 export interface FinanceData {

@@ -14,7 +14,14 @@ export interface Categoria {
 }
 
 export const CATEGORIAS: Categoria[] = [
-  { id: "transporte", label: "Transporte" },
+  {
+    id: "transporte",
+    label: "Transporte",
+    subcategorias: [
+      { id: "gasolina", label: "Gasolina" },
+      { id: "aplicativo", label: "Aplicativo (Uber, 99)" },
+    ],
+  },
   {
     id: "saude",
     label: "Saúde",
@@ -23,6 +30,7 @@ export const CATEGORIAS: Categoria[] = [
       { id: "remedio_paulo", label: "Remédio Paulo" },
       { id: "consultas_exames", label: "Consultas ou Exames" },
       { id: "plano", label: "Plano" },
+      { id: "outros", label: "Outros" },
     ],
   },
   {
@@ -32,6 +40,7 @@ export const CATEGORIAS: Categoria[] = [
       { id: "mistura", label: "Mistura" },
       { id: "cafe_manha", label: "Café da Manhã" },
       { id: "legumes", label: "Legumes" },
+      { id: "diversos", label: "Diversos" },
     ],
   },
   {
