@@ -134,12 +134,22 @@ export default function AssistenteTab({
           </div>
           <button
             onClick={handleAprofundarComIA}
-            disabled={iaLoading || insights.totalReceitas === 0}
+            disabled={
+              iaLoading ||
+              (insights.totalReceitas === 0 && insights.totalDespesas === 0)
+            }
             className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {iaLoading ? "Analisando..." : "Aprofundar com IA"}
           </button>
         </div>
+
+        {insights.totalReceitas === 0 && insights.totalDespesas === 0 && (
+          <p className="mt-3 text-xs text-slate-400">
+            Lance ao menos uma receita ou despesa neste mês para poder gerar
+            a análise.
+          </p>
+        )}
 
         {iaError && (
           <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">

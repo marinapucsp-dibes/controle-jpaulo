@@ -178,6 +178,7 @@ export default function DashboardTab({
                   cy="50%"
                   outerRadius={100}
                   label={(entry) => entry.name}
+                  isAnimationActive={false}
                 >
                   {porCategoria.map((_, i) => (
                     <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
@@ -217,7 +218,7 @@ export default function DashboardTab({
               <XAxis type="number" tickFormatter={(v) => formatBRL(v)} />
               <YAxis type="category" dataKey="name" width={90} />
               <Tooltip formatter={(v) => formatBRL(Number(v ?? 0))} />
-              <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
+              <Bar dataKey="valor" radius={[0, 6, 6, 0]} isAnimationActive={false}>
                 <Cell fill="#10b981" />
                 <Cell fill="#f43f5e" />
               </Bar>
@@ -279,7 +280,7 @@ export default function DashboardTab({
                 <XAxis type="number" tickFormatter={(v) => formatBRL(v)} />
                 <YAxis type="category" dataKey="name" width={100} />
                 <Tooltip formatter={(v) => formatBRL(Number(v ?? 0))} />
-                <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
+                <Bar dataKey="valor" radius={[0, 6, 6, 0]} isAnimationActive={false}>
                   {cartaoTerceirosPorNome.map((_, i) => (
                     <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
                   ))}
