@@ -8,6 +8,7 @@ import PagamentosTab from "./components/PagamentosTab";
 import DashboardTab from "./components/DashboardTab";
 import AssistenteTab from "./components/AssistenteTab";
 import RelatorioModal from "./components/RelatorioModal";
+import SyncModal from "./components/SyncModal";
 
 type Tab =
   | "receitas"
@@ -29,6 +30,12 @@ const TABS: { id: Tab; label: string }[] = [
 function App() {
   const {
     data,
+    codigoSync,
+    syncStatus,
+    syncError,
+    checkCodigoSync,
+    connectSync,
+    disconnectSync,
     addReceita,
     updateReceita,
     removeReceita,
@@ -49,6 +56,15 @@ function App() {
   const [tab, setTab] = useState<Tab>("receitas");
   const [monthKey, setMonthKey] = useState(currentMonthKey());
   const [relatorioAberto, setRelatorioAberto] = useState(false);
+  const [syncAberto, setSyncAberto] = useState(false);
+
+  const syncDotClass = !codigoSync
+    ? "bg-slate-300"
+    : syncStatus === "sincronizado"
+      ? "bg-emerald-500"
+      : syncStatus === "erro"
+        ? "bg-rose-500"
+        : "bg-amber-500";
 
   return (
     <div className="min-h-full">
@@ -70,6 +86,13 @@ function App() {
                 onChange={(e) => setMonthKey(e.target.value)}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
               />
+              <button
+                onClick={() => setSyncAberto(true)}
+                className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                <span className={`h-2 w-2 rounded-full ${syncDotClass}`} />
+                Sincronizar
+              </button>
               <button
                 onClick={() => setRelatorioAberto(true)}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
@@ -161,7 +184,10 @@ function App() {
         </main>
 
         <footer className="no-print border-t border-slate-200 bg-white px-4 py-3 text-center text-xs text-slate-400">
-          Controle Financeiro José Paulo · dados salvos neste dispositivo
+          Controle Financeiro José Paulo ·{" "}
+          {codigoSync
+            ? "dados sincronizados na nuvem"
+            : "dados salvos neste dispositivo"}
         </footer>
       </div>
 
@@ -172,6 +198,18 @@ function App() {
           pagamentos={data.pagamentos}
           cartaoTerceiros={data.cartaoTerceiros}
           onClose={() => setRelatorioAberto(false)}
+        />
+      )}
+
+      {syncAberto && (
+        <SyncModal
+          codigoSync={codigoSync}
+          syncStatus={syncStatus}
+          syncError={syncError}
+          onCheck={checkCodigoSync}
+          onConnect={connectSync}
+          onDisconnect={disconnectSync}
+          onClose={() => setSyncAberto(false)}
         />
       )}
     </div>

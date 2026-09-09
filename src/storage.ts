@@ -28,6 +28,20 @@ export function saveData(data: FinanceData): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+const CODIGO_SYNC_KEY = "controle-financeiro-jose-paulo:sync-codigo";
+
+export function loadCodigoSync(): string | null {
+  return localStorage.getItem(CODIGO_SYNC_KEY);
+}
+
+export function saveCodigoSync(codigo: string): void {
+  localStorage.setItem(CODIGO_SYNC_KEY, codigo);
+}
+
+export function clearCodigoSync(): void {
+  localStorage.removeItem(CODIGO_SYNC_KEY);
+}
+
 export function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();

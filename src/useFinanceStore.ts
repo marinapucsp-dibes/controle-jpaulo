@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   CartaoTerceiro,
   Despesa,
@@ -6,7 +6,15 @@ import type {
   Pagamento,
   Receita,
 } from "./types";
-import { loadData, newId, saveData } from "./storage";
+import {
+  clearCodigoSync,
+  loadCodigoSync,
+  loadData,
+  newId,
+  saveCodigoSync,
+  saveData,
+} from "./storage";
+import { fetchRemoteData, pushRemoteData } from "./sync";
 import { addMonthsISO } from "./format";
 
 export type NovaReceita = Omit<Receita, "id">;
@@ -14,12 +22,99 @@ export type NovaDespesa = Omit<Despesa, "id" | "groupId">;
 export type NovoPagamento = Omit<Pagamento, "id" | "groupId">;
 export type NovoCartaoTerceiro = Omit<CartaoTerceiro, "id" | "groupId" | "pago">;
 
+export type SyncStatus =
+  | "desconectado"
+  | "sincronizando"
+  | "sincronizado"
+  | "erro";
+
 export function useFinanceStore() {
   const [data, setData] = useState<FinanceData>(() => loadData());
+  const [codigoSync, setCodigoSyncState] = useState<string | null>(() =>
+    loadCodigoSync()
+  );
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() =>
+    loadCodigoSync() ? "sincronizando" : "desconectado"
+  );
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const initializingRef = useRef(!!loadCodigoSync());
 
   useEffect(() => {
     saveData(data);
   }, [data]);
+
+  // Puxa os dados da nuvem uma vez, ao carregar o app, se já houver um
+  // código de sincronização salvo neste dispositivo de uma sessão anterior.
+  useEffect(() => {
+    if (!codigoSync) {
+      initializingRef.current = false;
+      return;
+    }
+    let cancelled = false;
+    setSyncStatus("sincronizando");
+    fetchRemoteData(codigoSync)
+      .then((remote) => {
+        if (cancelled) return;
+        if (remote) setData(remote);
+        setSyncStatus("sincronizado");
+        setSyncError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setSyncStatus("erro");
+        setSyncError(err instanceof Error ? err.message : "Erro ao sincronizar.");
+      })
+      .finally(() => {
+        if (!cancelled) initializingRef.current = false;
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Envia para a nuvem sempre que os dados mudarem, enquanto conectado.
+  useEffect(() => {
+    if (!codigoSync || initializingRef.current) return;
+    setSyncStatus("sincronizando");
+    const timer = setTimeout(() => {
+      pushRemoteData(codigoSync, data)
+        .then(() => {
+          setSyncStatus("sincronizado");
+          setSyncError(null);
+        })
+        .catch((err) => {
+          setSyncStatus("erro");
+          setSyncError(
+            err instanceof Error ? err.message : "Erro ao sincronizar."
+          );
+        });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [data, codigoSync]);
+
+  const checkCodigoSync = useCallback(
+    (codigo: string) => fetchRemoteData(codigo),
+    []
+  );
+
+  const connectSync = useCallback(
+    (codigo: string, remoteData: FinanceData | null) => {
+      saveCodigoSync(codigo);
+      setCodigoSyncState(codigo);
+      setSyncStatus("sincronizando");
+      setSyncError(null);
+      if (remoteData) setData(remoteData);
+    },
+    []
+  );
+
+  const disconnectSync = useCallback(() => {
+    clearCodigoSync();
+    setCodigoSyncState(null);
+    setSyncStatus("desconectado");
+    setSyncError(null);
+  }, []);
 
   const addReceita = useCallback((input: NovaReceita) => {
     setData((prev) => ({
@@ -247,6 +342,12 @@ export function useFinanceStore() {
 
   return {
     data,
+    codigoSync,
+    syncStatus,
+    syncError,
+    checkCodigoSync,
+    connectSync,
+    disconnectSync,
     addReceita,
     updateReceita,
     removeReceita,
