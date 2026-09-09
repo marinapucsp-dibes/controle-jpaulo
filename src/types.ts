@@ -72,9 +72,36 @@ export interface CartaoTerceiro {
   parcelaTotal?: number;
 }
 
+export type TipoVale = "vale_refeicao" | "vale_alimentacao";
+
+export type CategoriaVale =
+  | "mistura"
+  | "cafe_manha"
+  | "lanche_tarde"
+  | "legumes_frutas"
+  | "variados";
+
+export interface ValeRecebimento {
+  id: string;
+  tipo: TipoVale;
+  valor: number;
+  data: string; // yyyy-mm-dd
+}
+
+export interface ValeUtilizacao {
+  id: string;
+  tipo: TipoVale;
+  valor: number;
+  data: string; // yyyy-mm-dd
+  local: string;
+  categoria: CategoriaVale;
+}
+
 export interface FinanceData {
   receitas: Receita[];
   despesas: Despesa[];
   pagamentos: Pagamento[];
   cartaoTerceiros: CartaoTerceiro[];
+  valeRecebimentos: ValeRecebimento[];
+  valeUtilizacoes: ValeUtilizacao[];
 }

@@ -1,4 +1,4 @@
-import type { CategoriaId, MetodoPagamento } from "./types";
+import type { CategoriaId, CategoriaVale, MetodoPagamento, TipoVale } from "./types";
 
 export interface Subcategoria {
   id: string;
@@ -89,3 +89,24 @@ export const RECEITA_FONTES: { id: "aposentadoria" | "loja" | "premios"; label: 
   { id: "loja", label: "Loja" },
   { id: "premios", label: "Prêmios" },
 ];
+
+export const TIPOS_VALE: { id: TipoVale; label: string }[] = [
+  { id: "vale_refeicao", label: "Vale Refeição" },
+  { id: "vale_alimentacao", label: "Vale Alimentação" },
+];
+
+export function tipoValeLabel(id: TipoVale): string {
+  return TIPOS_VALE.find((t) => t.id === id)?.label ?? id;
+}
+
+export const CATEGORIAS_VALE: { id: CategoriaVale; label: string }[] = [
+  { id: "mistura", label: "Mistura" },
+  { id: "cafe_manha", label: "Café da Manhã" },
+  { id: "lanche_tarde", label: "Lanche da Tarde" },
+  { id: "legumes_frutas", label: "Legumes e Frutas" },
+  { id: "variados", label: "Variados" },
+];
+
+export function categoriaValeLabel(id: CategoriaVale): string {
+  return CATEGORIAS_VALE.find((c) => c.id === id)?.label ?? id;
+}

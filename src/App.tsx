@@ -3,6 +3,7 @@ import { useFinanceStore } from "./useFinanceStore";
 import { currentMonthKey, monthLabel } from "./format";
 import ReceitasTab from "./components/ReceitasTab";
 import DespesasTab from "./components/DespesasTab";
+import ValeTab from "./components/ValeTab";
 import CartaoTerceirosTab from "./components/CartaoTerceirosTab";
 import PagamentosTab from "./components/PagamentosTab";
 import DashboardTab from "./components/DashboardTab";
@@ -13,6 +14,7 @@ import SyncModal from "./components/SyncModal";
 type Tab =
   | "receitas"
   | "despesas"
+  | "vale"
   | "cartaoTerceiros"
   | "pagamentos"
   | "dashboard"
@@ -21,6 +23,7 @@ type Tab =
 const TABS: { id: Tab; label: string }[] = [
   { id: "receitas", label: "Receitas" },
   { id: "despesas", label: "Despesas" },
+  { id: "vale", label: "Vale Refeição/Alimentação" },
   { id: "cartaoTerceiros", label: "Cartão Terceiros" },
   { id: "pagamentos", label: "Pagamentos" },
   { id: "dashboard", label: "Dashboard" },
@@ -52,6 +55,12 @@ function App() {
     removeCartaoTerceiro,
     removeCartaoTerceiroGroup,
     toggleCartaoTerceiroPago,
+    addValeRecebimento,
+    updateValeRecebimento,
+    removeValeRecebimento,
+    addValeUtilizacao,
+    updateValeUtilizacao,
+    removeValeUtilizacao,
   } = useFinanceStore();
   const [tab, setTab] = useState<Tab>("receitas");
   const [monthKey, setMonthKey] = useState(currentMonthKey());
@@ -143,6 +152,19 @@ function App() {
               onUpdate={updateDespesa}
               onRemove={removeDespesa}
               onRemoveGroup={removeDespesaGroup}
+            />
+          )}
+          {tab === "vale" && (
+            <ValeTab
+              valeRecebimentos={data.valeRecebimentos}
+              valeUtilizacoes={data.valeUtilizacoes}
+              monthKey={monthKey}
+              onAddRecebimento={addValeRecebimento}
+              onUpdateRecebimento={updateValeRecebimento}
+              onRemoveRecebimento={removeValeRecebimento}
+              onAddUtilizacao={addValeUtilizacao}
+              onUpdateUtilizacao={updateValeUtilizacao}
+              onRemoveUtilizacao={removeValeUtilizacao}
             />
           )}
           {tab === "cartaoTerceiros" && (

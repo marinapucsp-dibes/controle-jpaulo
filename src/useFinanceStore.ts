@@ -5,6 +5,8 @@ import type {
   FinanceData,
   Pagamento,
   Receita,
+  ValeRecebimento,
+  ValeUtilizacao,
 } from "./types";
 import {
   clearCodigoSync,
@@ -21,6 +23,8 @@ export type NovaReceita = Omit<Receita, "id">;
 export type NovaDespesa = Omit<Despesa, "id" | "groupId">;
 export type NovoPagamento = Omit<Pagamento, "id" | "groupId">;
 export type NovoCartaoTerceiro = Omit<CartaoTerceiro, "id" | "groupId" | "pago">;
+export type NovoValeRecebimento = Omit<ValeRecebimento, "id">;
+export type NovaValeUtilizacao = Omit<ValeUtilizacao, "id">;
 
 export type SyncStatus =
   | "desconectado"
@@ -340,6 +344,58 @@ export function useFinanceStore() {
     }));
   }, []);
 
+  const addValeRecebimento = useCallback((input: NovoValeRecebimento) => {
+    setData((prev) => ({
+      ...prev,
+      valeRecebimentos: [...prev.valeRecebimentos, { ...input, id: newId() }],
+    }));
+  }, []);
+
+  const updateValeRecebimento = useCallback(
+    (id: string, patch: NovoValeRecebimento) => {
+      setData((prev) => ({
+        ...prev,
+        valeRecebimentos: prev.valeRecebimentos.map((v) =>
+          v.id === id ? { ...v, ...patch } : v
+        ),
+      }));
+    },
+    []
+  );
+
+  const removeValeRecebimento = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      valeRecebimentos: prev.valeRecebimentos.filter((v) => v.id !== id),
+    }));
+  }, []);
+
+  const addValeUtilizacao = useCallback((input: NovaValeUtilizacao) => {
+    setData((prev) => ({
+      ...prev,
+      valeUtilizacoes: [...prev.valeUtilizacoes, { ...input, id: newId() }],
+    }));
+  }, []);
+
+  const updateValeUtilizacao = useCallback(
+    (id: string, patch: NovaValeUtilizacao) => {
+      setData((prev) => ({
+        ...prev,
+        valeUtilizacoes: prev.valeUtilizacoes.map((v) =>
+          v.id === id ? { ...v, ...patch } : v
+        ),
+      }));
+    },
+    []
+  );
+
+  const removeValeUtilizacao = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      valeUtilizacoes: prev.valeUtilizacoes.filter((v) => v.id !== id),
+    }));
+  }, []);
+
   return {
     data,
     codigoSync,
@@ -364,5 +420,11 @@ export function useFinanceStore() {
     removeCartaoTerceiro,
     removeCartaoTerceiroGroup,
     toggleCartaoTerceiroPago,
+    addValeRecebimento,
+    updateValeRecebimento,
+    removeValeRecebimento,
+    addValeUtilizacao,
+    updateValeUtilizacao,
+    removeValeUtilizacao,
   };
 }

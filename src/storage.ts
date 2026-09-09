@@ -3,7 +3,14 @@ import type { FinanceData } from "./types";
 const STORAGE_KEY = "controle-financeiro-jose-paulo:v1";
 
 function emptyData(): FinanceData {
-  return { receitas: [], despesas: [], pagamentos: [], cartaoTerceiros: [] };
+  return {
+    receitas: [],
+    despesas: [],
+    pagamentos: [],
+    cartaoTerceiros: [],
+    valeRecebimentos: [],
+    valeUtilizacoes: [],
+  };
 }
 
 export function loadData(): FinanceData {
@@ -17,6 +24,12 @@ export function loadData(): FinanceData {
       pagamentos: Array.isArray(parsed.pagamentos) ? parsed.pagamentos : [],
       cartaoTerceiros: Array.isArray(parsed.cartaoTerceiros)
         ? parsed.cartaoTerceiros
+        : [],
+      valeRecebimentos: Array.isArray(parsed.valeRecebimentos)
+        ? parsed.valeRecebimentos
+        : [],
+      valeUtilizacoes: Array.isArray(parsed.valeUtilizacoes)
+        ? parsed.valeUtilizacoes
         : [],
     };
   } catch {
