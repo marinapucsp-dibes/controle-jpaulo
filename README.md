@@ -44,8 +44,8 @@ Sem essa variável configurada, o app funciona normalmente — o botão de IA ap
 ### Ativar a Sincronização entre dispositivos (opcional)
 
 1. No painel do Vercel, abra o projeto e vá em **Storage**.
-2. Clique em **Create Database** → escolha **Upstash** → **Redis** (tem plano gratuito).
-3. Conecte o banco criado a este projeto — o Vercel deve preencher automaticamente as variáveis `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` em **Project Settings → Environment Variables**. Se não preencher sozinho, copie essas duas credenciais do painel do Upstash e cole manualmente lá.
+2. Clique em **Create Database** → escolha **Upstash for Redis** (tem plano gratuito).
+3. Conecte o banco criado a este projeto — o Vercel preenche automaticamente `KV_REST_API_URL` e `KV_REST_API_TOKEN` em **Project Settings → Environment Variables** (essa integração usa a nomenclatura clássica "KV", mesmo sendo Upstash por trás). Se criar o banco direto em upstash.com em vez de pelo Vercel, use `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — o código aceita qualquer um dos dois pares.
 4. Faça um novo deploy (ou redeploy) para as variáveis entrarem em vigor.
 5. No app, clique em **Sincronizar** no topo, crie um código (mínimo 6 caracteres) e use o mesmo código nos outros dispositivos/navegadores onde quiser ver os mesmos dados.
 

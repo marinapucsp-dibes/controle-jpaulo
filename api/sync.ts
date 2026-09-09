@@ -19,8 +19,13 @@ function hashCodigo(codigo: string): string {
 }
 
 async function upstashCommand(command: unknown[]): Promise<unknown> {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Vercel's "Storage -> Upstash for Redis" integration names these
+  // KV_REST_API_URL / KV_REST_API_TOKEN (classic "Vercel KV" naming).
+  // Connecting an Upstash database directly (upstash.com) instead names
+  // them UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN. Accept either.
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token =
+    process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) {
     throw new Error("UPSTASH_NOT_CONFIGURED");
   }
@@ -95,7 +100,7 @@ export default async function handler(
     if (error instanceof Error && error.message === "UPSTASH_NOT_CONFIGURED") {
       res.status(503).json({
         error:
-          "Sincronização indisponível: banco de dados não configurado no projeto (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN).",
+          "Sincronização indisponível: banco de dados não configurado no projeto (KV_REST_API_URL / KV_REST_API_TOKEN).",
       });
       return;
     }
