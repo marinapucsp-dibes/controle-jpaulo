@@ -13,6 +13,7 @@ import {
   loadCodigoSync,
   loadData,
   newId,
+  normalizeFinanceData,
   saveCodigoSync,
   saveData,
 } from "./storage";
@@ -59,7 +60,7 @@ export function useFinanceStore() {
     fetchRemoteData(codigoSync)
       .then((remote) => {
         if (cancelled) return;
-        if (remote) setData(remote);
+        if (remote) setData(normalizeFinanceData(remote));
         setSyncStatus("sincronizado");
         setSyncError(null);
       })
@@ -108,7 +109,7 @@ export function useFinanceStore() {
       setCodigoSyncState(codigo);
       setSyncStatus("sincronizando");
       setSyncError(null);
-      if (remoteData) setData(remoteData);
+      if (remoteData) setData(normalizeFinanceData(remoteData));
     },
     []
   );
