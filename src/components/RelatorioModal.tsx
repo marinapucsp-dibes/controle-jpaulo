@@ -88,7 +88,7 @@ export default function RelatorioModal({
   const totalDespesas = despesasFiltradas.reduce((s, d) => s + d.valor, 0);
   const totalPagamentos = pagamentosFiltrados.reduce((s, p) => s + p.valorTotal, 0);
   const totalCartaoTerceiros = cartaoTerceirosFiltrados.reduce(
-    (s, c) => s + c.valor,
+    (s, c) => s + c.valorTotal,
     0
   );
 
@@ -333,25 +333,36 @@ export default function RelatorioModal({
                 <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-400">
                   <th className="py-2">Nome</th>
                   <th className="py-2">Cartão</th>
-                  <th className="py-2">Descrição</th>
                   <th className="py-2">Data</th>
                   <th className="py-2">Status</th>
-                  <th className="py-2 text-right">Valor</th>
+                  <th className="py-2 text-right">Valor Total</th>
+                  <th className="py-2 text-right">Valor Pago</th>
                 </tr>
               </thead>
               <tbody>
-                {cartaoTerceirosFiltrados.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-100">
-                    <td className="py-1.5">{c.nome}</td>
-                    <td className="py-1.5">{metodoLabel(c.cartao)}</td>
-                    <td className="py-1.5">{c.descricao}</td>
-                    <td className="py-1.5">{formatDateBR(c.data)}</td>
-                    <td className="py-1.5">{c.pago ? "Pago" : "Pendente"}</td>
-                    <td className="py-1.5 text-right font-medium">
-                      {formatBRL(c.valor)}
-                    </td>
-                  </tr>
-                ))}
+                {cartaoTerceirosFiltrados.map((c) => {
+                  const pago = c.pagamentos.reduce((s, p) => s + p.valor, 0);
+                  const status =
+                    pago >= c.valorTotal - 0.004
+                      ? "Quitado"
+                      : pago > 0
+                        ? "Parcial"
+                        : "Pendente";
+                  return (
+                    <tr key={c.id} className="border-b border-slate-100">
+                      <td className="py-1.5">{c.nome}</td>
+                      <td className="py-1.5">{metodoLabel(c.cartao)}</td>
+                      <td className="py-1.5">{formatDateBR(c.data)}</td>
+                      <td className="py-1.5">{status}</td>
+                      <td className="py-1.5 text-right font-medium">
+                        {formatBRL(c.valorTotal)}
+                      </td>
+                      <td className="py-1.5 text-right font-medium">
+                        {formatBRL(pago)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

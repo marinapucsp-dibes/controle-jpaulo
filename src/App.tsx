@@ -53,8 +53,8 @@ function App() {
     addCartaoTerceiro,
     updateCartaoTerceiro,
     removeCartaoTerceiro,
-    removeCartaoTerceiroGroup,
-    toggleCartaoTerceiroPago,
+    addCartaoTerceiroPagamento,
+    removeCartaoTerceiroPagamento,
     addValeRecebimento,
     updateValeRecebimento,
     removeValeRecebimento,
@@ -174,8 +174,8 @@ function App() {
               onAdd={addCartaoTerceiro}
               onUpdate={updateCartaoTerceiro}
               onRemove={removeCartaoTerceiro}
-              onRemoveGroup={removeCartaoTerceiroGroup}
-              onTogglePago={toggleCartaoTerceiroPago}
+              onAddPagamento={addCartaoTerceiroPagamento}
+              onRemovePagamento={removeCartaoTerceiroPagamento}
             />
           )}
           {tab === "pagamentos" && (

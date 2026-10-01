@@ -23,7 +23,7 @@ import { addMonthsISO } from "./format";
 export type NovaReceita = Omit<Receita, "id">;
 export type NovaDespesa = Omit<Despesa, "id" | "groupId">;
 export type NovoPagamento = Omit<Pagamento, "id" | "groupId">;
-export type NovoCartaoTerceiro = Omit<CartaoTerceiro, "id" | "groupId" | "pago">;
+export type NovoCartaoTerceiro = Omit<CartaoTerceiro, "id" | "pagamentos">;
 export type NovoValeRecebimento = Omit<ValeRecebimento, "id">;
 export type NovaValeUtilizacao = Omit<ValeUtilizacao, "id">;
 
@@ -267,48 +267,16 @@ export function useFinanceStore() {
   }, []);
 
   const addCartaoTerceiro = useCallback((input: NovoCartaoTerceiro) => {
-    const groupId = newId();
-    const entries: CartaoTerceiro[] = [];
-
-    if (input.periodicidade === "parcelado" && input.parcelaTotal) {
-      const total = input.parcelaTotal;
-      const atual = input.parcelaAtual ?? 1;
-      for (let parcela = atual; parcela <= total; parcela++) {
-        const offset = parcela - atual;
-        entries.push({
-          ...input,
-          id: newId(),
-          groupId,
-          pago: false,
-          parcelaAtual: parcela,
-          parcelaTotal: total,
-          data: addMonthsISO(input.data, offset),
-        });
-      }
-    } else if (input.periodicidade === "recorrente") {
-      for (let offset = 0; offset < 12; offset++) {
-        entries.push({
-          ...input,
-          id: newId(),
-          groupId,
-          pago: false,
-          data: addMonthsISO(input.data, offset),
-        });
-      }
-    } else {
-      entries.push({ ...input, id: newId(), groupId, pago: false });
-    }
-
     setData((prev) => ({
       ...prev,
-      cartaoTerceiros: [...prev.cartaoTerceiros, ...entries],
+      cartaoTerceiros: [
+        ...prev.cartaoTerceiros,
+        { ...input, id: newId(), pagamentos: [] },
+      ],
     }));
   }, []);
 
-  type CartaoTerceiroEditavel = Omit<
-    CartaoTerceiro,
-    "id" | "groupId" | "pago" | "periodicidade" | "parcelaAtual" | "parcelaTotal"
-  >;
+  type CartaoTerceiroEditavel = Omit<CartaoTerceiro, "id" | "pagamentos">;
 
   const updateCartaoTerceiro = useCallback(
     (id: string, patch: CartaoTerceiroEditavel) => {
@@ -329,21 +297,39 @@ export function useFinanceStore() {
     }));
   }, []);
 
-  const removeCartaoTerceiroGroup = useCallback((groupId: string) => {
-    setData((prev) => ({
-      ...prev,
-      cartaoTerceiros: prev.cartaoTerceiros.filter((c) => c.groupId !== groupId),
-    }));
-  }, []);
+  const addCartaoTerceiroPagamento = useCallback(
+    (cartaoTerceiroId: string, input: { valor: number; data: string }) => {
+      setData((prev) => ({
+        ...prev,
+        cartaoTerceiros: prev.cartaoTerceiros.map((c) =>
+          c.id === cartaoTerceiroId
+            ? {
+                ...c,
+                pagamentos: [...c.pagamentos, { ...input, id: newId() }],
+              }
+            : c
+        ),
+      }));
+    },
+    []
+  );
 
-  const toggleCartaoTerceiroPago = useCallback((id: string) => {
-    setData((prev) => ({
-      ...prev,
-      cartaoTerceiros: prev.cartaoTerceiros.map((c) =>
-        c.id === id ? { ...c, pago: !c.pago } : c
-      ),
-    }));
-  }, []);
+  const removeCartaoTerceiroPagamento = useCallback(
+    (cartaoTerceiroId: string, pagamentoId: string) => {
+      setData((prev) => ({
+        ...prev,
+        cartaoTerceiros: prev.cartaoTerceiros.map((c) =>
+          c.id === cartaoTerceiroId
+            ? {
+                ...c,
+                pagamentos: c.pagamentos.filter((p) => p.id !== pagamentoId),
+              }
+            : c
+        ),
+      }));
+    },
+    []
+  );
 
   const addValeRecebimento = useCallback((input: NovoValeRecebimento) => {
     setData((prev) => ({
@@ -419,8 +405,8 @@ export function useFinanceStore() {
     addCartaoTerceiro,
     updateCartaoTerceiro,
     removeCartaoTerceiro,
-    removeCartaoTerceiroGroup,
-    toggleCartaoTerceiroPago,
+    addCartaoTerceiroPagamento,
+    removeCartaoTerceiroPagamento,
     addValeRecebimento,
     updateValeRecebimento,
     removeValeRecebimento,

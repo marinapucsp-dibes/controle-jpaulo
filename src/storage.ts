@@ -1,6 +1,43 @@
-import type { FinanceData } from "./types";
+import type { CartaoTerceiro, CartaoTerceiroPagamento, FinanceData } from "./types";
 
 const STORAGE_KEY = "controle-financeiro-jose-paulo:v1";
+
+// Converte um lançamento de Cartão Terceiros para o formato atual
+// (nome + valorTotal + pagamentos[]). Lançamentos salvos pela versão
+// anterior do app (um registro por compra, com `valor`/`pago`/
+// `periodicidade`) são migrados automaticamente: o valor vira valorTotal e,
+// se já estava marcado como pago, vira um pagamento único na data do
+// lançamento.
+function normalizeCartaoTerceiro(raw: unknown): CartaoTerceiro | null {
+  const c = raw as Record<string, unknown>;
+  if (!c || typeof c !== "object") return null;
+  const id = typeof c.id === "string" ? c.id : null;
+  const nome = typeof c.nome === "string" ? c.nome : null;
+  const cartao = typeof c.cartao === "string" ? c.cartao : null;
+  const data = typeof c.data === "string" ? c.data : null;
+  if (!id || !nome || !cartao || !data) return null;
+
+  if (Array.isArray(c.pagamentos)) {
+    const valorTotal = typeof c.valorTotal === "number" ? c.valorTotal : 0;
+    const pagamentos = c.pagamentos.filter(
+      (p): p is CartaoTerceiroPagamento =>
+        !!p &&
+        typeof p === "object" &&
+        typeof (p as CartaoTerceiroPagamento).id === "string" &&
+        typeof (p as CartaoTerceiroPagamento).valor === "number" &&
+        typeof (p as CartaoTerceiroPagamento).data === "string"
+    );
+    return { id, nome, cartao: cartao as CartaoTerceiro["cartao"], valorTotal, data, pagamentos };
+  }
+
+  // Formato antigo: um registro por compra, com valor/pago.
+  const valorTotal = typeof c.valor === "number" ? c.valor : 0;
+  const pagamentos: CartaoTerceiroPagamento[] =
+    c.pago === true
+      ? [{ id: `${id}-migrado`, valor: valorTotal, data }]
+      : [];
+  return { id, nome, cartao: cartao as CartaoTerceiro["cartao"], valorTotal, data, pagamentos };
+}
 
 function emptyData(): FinanceData {
   return {
@@ -25,7 +62,9 @@ export function normalizeFinanceData(raw: unknown): FinanceData {
       ? (parsed.pagamentos as FinanceData["pagamentos"])
       : [],
     cartaoTerceiros: Array.isArray(parsed.cartaoTerceiros)
-      ? (parsed.cartaoTerceiros as FinanceData["cartaoTerceiros"])
+      ? parsed.cartaoTerceiros
+          .map((c) => normalizeCartaoTerceiro(c))
+          .filter((c): c is CartaoTerceiro => c !== null)
       : [],
     valeRecebimentos: Array.isArray(parsed.valeRecebimentos)
       ? (parsed.valeRecebimentos as FinanceData["valeRecebimentos"])

@@ -58,18 +58,19 @@ export interface Pagamento {
 
 export type CartaoProprio = "cartao_casas_bahia" | "cartao_caixa";
 
-export interface CartaoTerceiro {
+export interface CartaoTerceiroPagamento {
   id: string;
-  groupId: string;
-  nome: string;
-  cartao: CartaoProprio;
-  descricao: string;
   valor: number;
   data: string; // yyyy-mm-dd
-  pago: boolean;
-  periodicidade: Periodicidade;
-  parcelaAtual?: number;
-  parcelaTotal?: number;
+}
+
+export interface CartaoTerceiro {
+  id: string;
+  nome: string;
+  cartao: CartaoProprio;
+  valorTotal: number;
+  data: string; // yyyy-mm-dd — data do lançamento da dívida
+  pagamentos: CartaoTerceiroPagamento[];
 }
 
 export type TipoVale = "vale_refeicao" | "vale_alimentacao";

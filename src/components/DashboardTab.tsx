@@ -109,10 +109,14 @@ export default function DashboardTab({
     [cartaoTerceiros, monthKey]
   );
 
+  // Mostra apenas o valor já pago por cada pessoa — o saldo pendente de
+  // Cartão Terceiros não entra no dashboard, só o que já foi recebido.
   const cartaoTerceirosPorNome = useMemo(() => {
     const map = new Map<string, number>();
     for (const c of cartaoTerceirosDoMes) {
-      map.set(c.nome, (map.get(c.nome) ?? 0) + c.valor);
+      const pago = c.pagamentos.reduce((s, p) => s + p.valor, 0);
+      if (pago <= 0) continue;
+      map.set(c.nome, (map.get(c.nome) ?? 0) + pago);
     }
     return Array.from(map.entries())
       .map(([name, valor]) => ({ name, valor }))
@@ -269,7 +273,7 @@ export default function DashboardTab({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h3 className="mb-2 text-sm font-semibold text-slate-700">
-              Cartão Terceiros por pessoa
+              Cartão Terceiros recebido por pessoa
             </h3>
             <ResponsiveContainer width="100%" height={Math.max(200, cartaoTerceirosPorNome.length * 44)}>
               <BarChart
@@ -292,7 +296,7 @@ export default function DashboardTab({
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-4 py-3">
               <h3 className="text-sm font-semibold text-slate-700">
-                Cartão Terceiros — total por pessoa
+                Cartão Terceiros — recebido por pessoa
               </h3>
             </div>
             <ul className="divide-y divide-slate-100">
